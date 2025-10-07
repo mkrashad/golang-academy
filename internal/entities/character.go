@@ -1,6 +1,5 @@
-package models
+package entities
 
 type Character struct {
-	CharacterId int
 	Name        string
 }

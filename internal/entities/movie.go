@@ -1,7 +1,6 @@
-package models
+package entities
 
 type Movie struct {
-	MovieId int
 	Title string
 	Year  int
 }

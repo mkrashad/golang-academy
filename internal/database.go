@@ -9,8 +9,20 @@ type Database struct {
 	CharacterMovies []entities.CharacterMovie
 }
 
+func New() *Database {
+	return &Database{}
+}
+
+func (db *Database) Get() []entities.CharacterMovie {
+	return db.CharacterMovies
+}
+
+func (db *Database) GetById(id int) entities.CharacterMovie {
+	return db.CharacterMovies[id]
+}
 
 func (db *Database) Create(movie *entities.Movie, character *entities.Character) {
+
 	db.CharacterMovies = append(db.CharacterMovies, entities.CharacterMovie{
 		Character: character,
 		Movie:     movie,

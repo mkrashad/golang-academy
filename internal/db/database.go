@@ -1,4 +1,4 @@
-package internal
+package db
 
 import (
 	"fmt"
@@ -17,12 +17,14 @@ func (db *Database) Get() []entities.CharacterMovie {
 	return db.CharacterMovies
 }
 
-func (db *Database) GetById(id int) entities.CharacterMovie {
-	return db.CharacterMovies[id]
+func (db *Database) GetById(id int) (entities.CharacterMovie, error) {
+	if id < 0 || id >= len(db.CharacterMovies) {
+		return entities.CharacterMovie{}, fmt.Errorf("index out of bound")
+	}
+	return db.CharacterMovies[id], nil
 }
 
 func (db *Database) Create(movie *entities.Movie, character *entities.Character) {
-
 	db.CharacterMovies = append(db.CharacterMovies, entities.CharacterMovie{
 		Character: character,
 		Movie:     movie,

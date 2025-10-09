@@ -1,7 +1,6 @@
-package test
+package db
 
 import (
-	"golang-academy/internal"
 	"golang-academy/internal/entities"
 	"testing"
 
@@ -9,7 +8,7 @@ import (
 )
 
 func TestDatabase(t *testing.T) {
-	db := &internal.Database{}
+	db := &Database{}
 
 	movie1 := &entities.Movie{Title: "Lord of the Rings", Year: 2001}
 	movie2 := &entities.Movie{Title: "Harry Potter", Year: 2001}

@@ -1,23 +1,13 @@
 package api
 
 import (
-	"context"
-	"encoding/json"
-	"fmt"
 	"golang-academy/internal/db"
 	"golang-academy/internal/entities"
-	"net"
-	"net/http"
 	"strconv"
 
-	"go.uber.org/fx"
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
-
-type Route interface {
-	http.Handler
-	Pattern() string
-}
 
 type MoviesHandler struct {
 	log *zap.Logger
@@ -28,89 +18,53 @@ func NewMovieHandler(log *zap.Logger, db *db.Database) *MoviesHandler {
 	return &MoviesHandler{log: log, db: db}
 }
 
-func (*MoviesHandler) Pattern() string {
-	return "/movie"
+func (h *MoviesHandler) GetMovies(c echo.Context) error {
+	movies := h.db.Get()
+	return c.JSON(200, movies)
 }
 
-func (h *MoviesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	switch r.Method {
-	case http.MethodGet:
-		movies := h.db.Get()
-		if err := json.NewEncoder(w).Encode(movies); err != nil {
-			h.log.Error("Failed to encode response", zap.Error(err))
-			http.Error(w, "Internal server error", http.StatusInternalServerError)
-		}
-
-	case http.MethodPost:
-		defer r.Body.Close()
-		var movieCharacter entities.CharacterMovie
-		if err := json.NewDecoder(r.Body).Decode(&movieCharacter); err != nil {
-			h.log.Error("Failed to decode request body", zap.Error(err))
-			http.Error(w, "Invalid JSON body", http.StatusBadRequest)
-			return
-		}
-
-		h.db.Create(movieCharacter.Movie, movieCharacter.Character)
-		w.WriteHeader(http.StatusCreated)
-		fmt.Fprintln(w, "Movie and character added successfully")
-
-	case http.MethodDelete:
-		idStr := r.URL.Query().Get("id")
-		id, err := strconv.Atoi(idStr)
-
-		if err != nil {
-			http.Error(w, "Invalid or missing id parameter", http.StatusBadRequest)
-			return
-		}
-		h.db.Delete(id)
-		fmt.Fprintf(w, "Movie with ID %d deleted successfully\n", id)
-
-	case http.MethodPut:
-		idStr := r.URL.Query().Get("id")
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			http.Error(w, "Invalid or missing id parameter", http.StatusBadRequest)
-			return
-		}
-
-		var movieCharacter entities.CharacterMovie
-		if err := json.NewDecoder(r.Body).Decode(&movieCharacter); err != nil {
-			h.log.Error("Failed to decode request body", zap.Error(err))
-			http.Error(w, "Invalid JSON body", http.StatusBadRequest)
-			return
-		}
-		h.db.Update(id, movieCharacter)
-		fmt.Fprintf(w, "Movie with ID %d deleted successfully\n", id)
-
-	default:
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+func (h *MoviesHandler) CreateMovie(c echo.Context) error {
+	var movieCharacter entities.CharacterMovie
+	if err := c.Bind(&movieCharacter); err != nil {
+		h.log.Error("Failed to bind request body", zap.Error(err))
+		return c.JSON(400, map[string]string{"error": "Invalid JSON body"})
 	}
+
+	h.db.Create(movieCharacter.Movie, movieCharacter.Character)
+	return c.JSON(201, map[string]string{"message": "Movie and character added successfully"})
 }
 
-func NewHTTPServer(lc fx.Lifecycle, mux *http.ServeMux, log *zap.Logger) *http.Server {
-	srv := &http.Server{Addr: ":8080", Handler: mux}
-	lc.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			ln, err := net.Listen("tcp", srv.Addr)
-			if err != nil {
-				return err
-			}
-			log.Info("Starting HTTP server", zap.String("addr", srv.Addr))
-			go srv.Serve(ln)
-			return nil
-		},
-		OnStop: func(ctx context.Context) error {
-			return srv.Shutdown(ctx)
-		},
-	})
-	return srv
-}
-
-func NewServeMux(routes []Route) *http.ServeMux {
-	mux := http.NewServeMux()
-	for _, route := range routes {
-		mux.Handle(route.Pattern(), route)
+func (h *MoviesHandler) DeleteMovie(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return c.JSON(400, map[string]string{"error": "Invalid or missing id parameter"})
 	}
-	return mux
+	h.db.Delete(id)
+	return c.JSON(200, map[string]string{"message": "Movie with ID " + idStr + " deleted successfully"})
+}
+
+func (h *MoviesHandler) UpdateMovie(c echo.Context) error {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return c.JSON(400, map[string]string{"error": "Invalid or missing id parameter"})
+	}
+
+	var movieCharacter entities.CharacterMovie
+	if err := c.Bind(&movieCharacter); err != nil {
+		h.log.Error("Failed to bind request body", zap.Error(err))
+		return c.JSON(400, map[string]string{"error": "Invalid JSON body"})
+	}
+
+	h.db.Update(id, movieCharacter)
+	return c.JSON(200, map[string]string{"message": "Movie with ID " + idStr + " updated successfully"})
+}
+
+func RegisterRoutes(e *echo.Echo, log *zap.Logger, db *db.Database){
+	handler := NewMovieHandler(log, db)
+	e.GET("/movie", handler.GetMovies)
+	e.POST("/movie", handler.CreateMovie)
+	e.DELETE("/movie/:id", handler.DeleteMovie)
+	e.PUT("/movie/:id", handler.UpdateMovie)
 }

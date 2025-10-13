@@ -6,26 +6,39 @@ import (
 	"golang-academy/internal/generated"
 	"strconv"
 
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
+	//"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
-type MoviesHandler struct {
+type MovieHandler struct {
 	log *zap.Logger
 	db  *db.Database
 }
 
-func NewMovieHandler(log *zap.Logger, db *db.Database) *MoviesHandler {
-	return &MoviesHandler{log: log, db: db}
+func NewMovieHandler(log *zap.Logger, db *db.Database) *MovieHandler {
+	return &MovieHandler{log: log, db: db}
 }
 
-func (h *MoviesHandler) GetMovie(c echo.Context) error {
-	movies := h.db.Get()
+func (h *MovieHandler) GetMovie(c echo.Context) error {
+	movies := h.db.GetAll()
 	return c.JSON(200, movies)
 }
 
-func (h *MoviesHandler) PostMovie(c echo.Context) error {
+func (h *MovieHandler) GetMovieId(c echo.Context, id int) error {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return c.JSON(400, map[string]string{"error": "Invalid or missing id parameter"})
+	}
+	movie, err := h.db.GetById(id)
+	if err != nil {
+		return c.JSON(400, map[string]string{"error": "No movie with this id exists"})
+	}
+	return c.JSON(200, movie)
+}
+
+func (h *MovieHandler) PostMovie(c echo.Context) error {
 	var movieCharacter entities.CharacterMovie
 	if err := c.Bind(&movieCharacter); err != nil {
 		h.log.Error("Failed to bind request body", zap.Error(err))
@@ -36,7 +49,7 @@ func (h *MoviesHandler) PostMovie(c echo.Context) error {
 	return c.JSON(201, map[string]string{"message": "Movie and character added successfully"})
 }
 
-func (h *MoviesHandler) DeleteMovieId(c echo.Context, id int) error {
+func (h *MovieHandler) DeleteMovieId(c echo.Context, id int) error {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -46,7 +59,7 @@ func (h *MoviesHandler) DeleteMovieId(c echo.Context, id int) error {
 	return c.JSON(200, map[string]string{"message": "Movie with ID " + idStr + " deleted successfully"})
 }
 
-func (h *MoviesHandler) PutMovieId(c echo.Context, id int) error {
+func (h *MovieHandler) PutMovieId(c echo.Context, id int) error {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
@@ -65,13 +78,13 @@ func (h *MoviesHandler) PutMovieId(c echo.Context, id int) error {
 
 func RegisterRoutes(e *echo.Echo, log *zap.Logger, db *db.Database) {
 	handler := NewMovieHandler(log, db)
-	swagger, err := generated.GetSwagger()
-	if err != nil {
-		log.Fatal("Failed to load OpenAPI spec", zap.Error(err))
-	}
+	// swagger, err := generated.GetSwagger()
+	// if err != nil {
+	// 	log.Fatal("Failed to load OpenAPI spec", zap.Error(err))
+	// }
 
-	// Request validation middleware
-	e.Use(middleware.OapiRequestValidator(swagger))
+	//  Validation middleware
+	//e.Use(middleware.OapiRequestValidator(swagger))
 
 	generated.RegisterHandlers(e, handler)
 }

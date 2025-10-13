@@ -13,7 +13,7 @@ func New() *Database {
 	return &Database{}
 }
 
-func (db *Database) Get() []entities.CharacterMovie {
+func (db *Database) GetAll() []entities.CharacterMovie {
 	return db.CharacterMovies
 }
 

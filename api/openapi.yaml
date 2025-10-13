@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Movies API
   version: 1.0.0
-  description: API to manage movies and their characters
+  description: API to manage movies and characters
 
 servers:
   - url: http://localhost:8080
@@ -48,6 +48,33 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 
   /movie/{id}:
+    get:
+      summary: Get a movie by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Movie ID
+      responses:
+        '200':
+          description: Movie ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Movie with ID
+        '400':
+          description: Invalid or missing id parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
     delete:
       summary: Delete a movie by ID
       parameters:
@@ -107,7 +134,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-
 components:
   schemas:
     Movie:

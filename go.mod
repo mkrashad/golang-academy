@@ -47,6 +47,7 @@ require (
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deepmap/oapi-codegen v1.16.3
+	github.com/go-resty/resty/v2 v2.16.5
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/swaggo/echo-swagger v1.4.1

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"golang-academy/internal/client"
 	"golang-academy/internal/db"
 	"golang-academy/internal/handlers"
 	"golang-academy/internal/server"
@@ -15,6 +16,7 @@ func main() {
 		fx.Provide(
 			server.NewHTTPServer,
 			db.New,
+			client.NewClient,
 			zap.NewExample,
 		),
 		fx.Invoke(handlers.RegisterRoutes),

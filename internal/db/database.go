@@ -2,15 +2,19 @@ package db
 
 import (
 	"fmt"
+	"golang-academy/internal/client"
 	"golang-academy/internal/entities"
 )
 
 type Database struct {
 	CharacterMovies []entities.CharacterMovie
+	client          *client.Client
 }
 
-func New() *Database {
-	return &Database{}
+func New(c *client.Client) *Database {
+	return &Database{
+		client: c,
+	}
 }
 
 func (db *Database) GetAll() []entities.CharacterMovie {
@@ -25,6 +29,7 @@ func (db *Database) GetById(id int) (entities.CharacterMovie, error) {
 }
 
 func (db *Database) Create(movie *entities.Movie, character *entities.Character) {
+	db.client.StarWarsCharacter(character.Name)
 	db.CharacterMovies = append(db.CharacterMovies, entities.CharacterMovie{
 		Character: character,
 		Movie:     movie,

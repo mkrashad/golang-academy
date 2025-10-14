@@ -161,6 +161,9 @@ components:
 
     CharacterMovie:
       type: object
+      required:
+        - movie
+        - character
       properties:
         movie:
           $ref: '#/components/schemas/Movie'

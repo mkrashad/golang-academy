@@ -6,7 +6,7 @@ import (
 	"golang-academy/internal/generated"
 	"strconv"
 
-	//"github.com/deepmap/oapi-codegen/pkg/middleware"
+	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
@@ -78,13 +78,13 @@ func (h *MovieHandler) PutMovieId(c echo.Context, id int) error {
 
 func RegisterRoutes(e *echo.Echo, log *zap.Logger, db *db.Database) {
 	handler := NewMovieHandler(log, db)
-	// swagger, err := generated.GetSwagger()
-	// if err != nil {
-	// 	log.Fatal("Failed to load OpenAPI spec", zap.Error(err))
-	// }
+	swagger, err := generated.GetSwagger()
+	if err != nil {
+		log.Fatal("Failed to load OpenAPI spec", zap.Error(err))
+	}
 
-	//  Validation middleware
-	//e.Use(middleware.OapiRequestValidator(swagger))
+	//Validation middleware
+	e.Use(middleware.OapiRequestValidator(swagger))
 
 	generated.RegisterHandlers(e, handler)
 }

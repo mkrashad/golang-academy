@@ -29,7 +29,9 @@ func (db *Database) GetById(id int) (entities.CharacterMovie, error) {
 }
 
 func (db *Database) Create(movie *entities.Movie, character *entities.Character) {
-	db.client.StarWarsCharacter(character.Name)
+	if character != nil {
+		db.client.StarWarsCharacter(character.Name)
+	}
 	db.CharacterMovies = append(db.CharacterMovies, entities.CharacterMovie{
 		Character: character,
 		Movie:     movie,

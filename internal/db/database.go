@@ -2,18 +2,24 @@ package db
 
 import (
 	"fmt"
+	"golang-academy/internal/client"
 	"golang-academy/internal/entities"
+	"sync"
 )
 
 type Database struct {
 	CharacterMovies []entities.CharacterMovie
+	client          *client.Client
+	lock            sync.Mutex
 }
 
-func New() *Database {
-	return &Database{}
+func New(c *client.Client) *Database {
+	return &Database{
+		client: c,
+	}
 }
 
-func (db *Database) Get() []entities.CharacterMovie {
+func (db *Database) GetAll() []entities.CharacterMovie {
 	return db.CharacterMovies
 }
 
@@ -25,17 +31,24 @@ func (db *Database) GetById(id int) (entities.CharacterMovie, error) {
 }
 
 func (db *Database) Create(movie *entities.Movie, character *entities.Character) {
+	if character != nil {
+		db.client.StarWarsCharacter(character.Name)
+	}
+	db.lock.Lock()
 	db.CharacterMovies = append(db.CharacterMovies, entities.CharacterMovie{
 		Character: character,
 		Movie:     movie,
 	})
+	db.lock.Unlock()
 }
 
 func (db *Database) Update(index int, c entities.CharacterMovie) error {
 	if index < 0 || index >= len(db.CharacterMovies) {
 		return fmt.Errorf("index out of bound")
 	}
+	db.lock.Lock()
 	db.CharacterMovies[index] = c
+	db.lock.Unlock()
 	return nil
 }
 

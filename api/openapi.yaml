@@ -134,6 +134,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
+  /certs/movie/{title}:
+    get:
+      summary: Get a movie certificate
+      parameters:
+        - in: path
+          name: title
+          required: true
+          schema:
+            type: string
+          description: Movie title
+      responses:
+        '200':
+          description: Returns the movie certificate
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+        '404':
+          description: Certificate not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /certs/character/{name}:
+    get:
+      summary: Get a character certificate
+      parameters:
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+          description: Character name
+      responses:
+        '200':
+          description: Returns the character certificate
+          content:
+            application/x-pem-file:
+              schema:
+                type: string
+        '404':
+          description: Certificate not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     Movie:

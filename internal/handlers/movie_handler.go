@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"golang-academy/internal/certificates"
 	"golang-academy/internal/db"
 	"golang-academy/internal/entities"
 	"golang-academy/internal/generated"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/deepmap/oapi-codegen/pkg/middleware"
@@ -18,6 +21,23 @@ type MovieHandler struct {
 
 func NewMovieHandler(log *zap.Logger, db *db.Database) *MovieHandler {
 	return &MovieHandler{log: log, db: db}
+}
+
+func (h *MovieHandler) GetCertsCharacterName(c echo.Context, name string) error {
+	certsDir := os.Getenv("CERTS_DIR")
+	certPath := filepath.Join(certsDir, "char-"+name+".crt")
+	if _, err := os.Stat(certPath); os.IsNotExist(err) {
+		return c.JSON(404, map[string]string{"error": "Certificate not found"})
+	}
+	return c.File(certPath)
+}
+func (h *MovieHandler) GetCertsMovieTitle(c echo.Context, title string) error {
+	certsDir := os.Getenv("CERTS_DIR")
+	certPath := filepath.Join(certsDir, "movie-"+title+".crt")
+	if _, err := os.Stat(certPath); os.IsNotExist(err) {
+		return c.JSON(404, map[string]string{"error": "Certificate not found"})
+	}
+	return c.File(certPath)
 }
 
 func (h *MovieHandler) GetMovie(c echo.Context) error {
@@ -46,6 +66,15 @@ func (h *MovieHandler) PostMovie(c echo.Context) error {
 	}
 
 	h.db.Create(movieCharacter.Movie, movieCharacter.Character)
+	// Generate movie certificate if it doesn't exist
+	if err := certificates.GenerateMovieCert(movieCharacter.Movie.Title); err != nil {
+		h.log.Error("Failed to generate movie certificate", zap.Error(err))
+	}
+
+	// Generate character certificate signed by movie
+	if err := certificates.GenerateCharacterCert(movieCharacter.Character.Name, movieCharacter.Movie.Title); err != nil {
+		h.log.Error("Failed to generate character certificate", zap.Error(err))
+	}
 	return c.JSON(201, map[string]string{"message": "Movie and character added successfully"})
 }
 

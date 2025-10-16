@@ -50,6 +50,12 @@ type PutMovieIdJSONRequestBody = CharacterMovie
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// Get a character certificate
+	// (GET /certs/character/{name})
+	GetCertsCharacterName(ctx echo.Context, name string) error
+	// Get a movie certificate
+	// (GET /certs/movie/{title})
+	GetCertsMovieTitle(ctx echo.Context, title string) error
 	// Get all movies
 	// (GET /movie)
 	GetMovie(ctx echo.Context) error
@@ -70,6 +76,38 @@ type ServerInterface interface {
 // ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
 	Handler ServerInterface
+}
+
+// GetCertsCharacterName converts echo context to params.
+func (w *ServerInterfaceWrapper) GetCertsCharacterName(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "name" -------------
+	var name string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetCertsCharacterName(ctx, name)
+	return err
+}
+
+// GetCertsMovieTitle converts echo context to params.
+func (w *ServerInterfaceWrapper) GetCertsMovieTitle(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "title" -------------
+	var title string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "title", ctx.Param("title"), &title, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter title: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.GetCertsMovieTitle(ctx, title)
+	return err
 }
 
 // GetMovie converts echo context to params.
@@ -166,6 +204,8 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 		Handler: si,
 	}
 
+	router.GET(baseURL+"/certs/character/:name", wrapper.GetCertsCharacterName)
+	router.GET(baseURL+"/certs/movie/:title", wrapper.GetCertsMovieTitle)
 	router.GET(baseURL+"/movie", wrapper.GetMovie)
 	router.POST(baseURL+"/movie", wrapper.PostMovie)
 	router.DELETE(baseURL+"/movie/:id", wrapper.DeleteMovieId)
@@ -177,19 +217,21 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9yVW0/jOhDHv4o15zxGTXs4D5A3FlarrhYW7eUJ8TDE08YosY3tFKoq331lJ6TNZVEr",
-	"WIH2pRfb45n5z2/GG0hVoZUk6SwkG7BpRgWGn2cZGkwdGf9HG6XJOEFhS3D/SY9Y6JwgmUXg1pogASEd",
-	"LclAFYHEgjqn4JIUtCetM0IuoaraFXV7R6nzpq3nC7USNHSf7kb2r6EFJPBPvE0kbrKItylUERRPlz1n",
-	"UXv0URm6L4UhDsl1YxrtOL4ZCfujMcp8I6uVtCNRk9/uKjKXK8wFZ5+/f71kt4qv99PnN7LsUxUnXN4r",
-	"y4+M2AU6Ix6H3iNYE3aDnp2cnAxvHobpl4RcKG/MyaZGaCeUhAROr+bMKVagxCWxoK1lKDlr5bXQRlon",
-	"a9np1RwiWJGx9SWzyXQy9QEqTRK1gASOJtPJEUSg0WVBkLgt+ZKc//JqoY9iziGBT+QumsKapmrB7L/p",
-	"NFCmpCMZ7FDrXKTBMr6z3v9TpwTdHRV2bxQbwlq90Bhc13L1ZGK5sI6pRSNRENmWRYFmXUfPMM/bzQi0",
-	"siNZXim7k+Z9SdZ98KQdkuEhiXV7x5mSqoG+s4O8dykvyFpc9hgOvrsMMeScOLNlmpK1izLP9+quYR32",
-	"vLuK4P8DwXlO1u4wGQlrODu6fJwZQkcMmaSHGhL2IFzGcJtGsKibJN4IXtWtmpOjIUbnYT1oMeehyQwW",
-	"FHo1ud6MSjY/Bz8CIAkdCU9Pgp9TfUSiHVUGo+Xmhf25Nz9Bn/k5m7FahdejZ/S+tyJGGVYIa4VcMsFZ",
-	"W8geP3XBGTbs3K59Pavo+VH6t6PxEgZq+d5xxcOL0i+3LsfelPINy/0+nrA/PoJKzfE1R9DofW/+aHk0",
-	"Rb0YbxHtgfkzhN5nM5whsxoH74tKMWf1PkRQmhwSyJzTSRznfi9T1iXH0+MpVDfVrwAAAP//iYUZdAcN",
-	"AAA=",
+	"H4sIAAAAAAAC/9xWy27rNhD9FWLapa4l997FjXapUxQumjRI01XgBSOOLQYSyZCUE8PQvxekZNl62FGQ",
+	"tEm7yYOP4ZlzzsxoC4nMlRQorIF4CyZJMaf+z1lKNU0saveP0lKhthz9FmfuJz7TXGUI8TQAu1EIMXBh",
+	"cYUaygAEzbF1Cq5QQnPSWM3FCsqyWZH3D5hYd7V5+VKuOfafTw6R/ahxCTH8EO4TCesswn0KZQD5Ltip",
+	"G9WLDpXGx4JrZBDf1VeDg4cXA7B/0VrqGzRKCjOAGt12m5G5WNOMM/Lbn39ckXvJNuP4OULLGFUst1lH",
+	"ltsUySW1mj/3Xw9gg7QNenp2dtaP3IfplrhYSneZoUk0V5ZLATGcX8+JlSSngq6QeG4NoYKRhl4DDdIq",
+	"WUPOr+cQwBq1qYJMJ9EkcgClQkEVhxi+TqLJVwhAUZt6QsIEtTVhEzbcOlOWbmuF1v1y9FEHa84ghl/R",
+	"ztyNxjZXzsMuoKY5elzxXTeb5jAR1WnuVh0G2BUB1Dt7S1ldYFAXm8PRFX3hDldG8pn8FEXe+FJYFB45",
+	"VSrjiccePn9RmH9Z8krZ41HLoIP9Bm2hhSE2xT35xLHGly44OoK/Rd9OvP1gXKTDV0+VV7tEBhDN9m8T",
+	"IS1ZykIwby9T5DnVm0omQo/hLYOd7N5Y4db76GXNvc1uvedeENyfJLY+OqD2butTy+3Z+Y9IPYDVydw0",
+	"9GPCXtZt+xXc9nPkFnMzetDU86PphlRruhnK/pxk3Fgil3UDHEo8y5rNAJQ0A1leS3OQ5mOBxv7s5sh7",
+	"qdhNrD0Zna/LHr/TV73enmE5GkNXnQlVVVxrQhDKGDJiiiRBY5ZFlo2anX0dRsb2xRH9e8XR/zJo+2Om",
+	"0dUNJQKf6vp44jY97IsHRRJuOSurQZyhxb6NLvy652LOxjXA+cVw9+NsTOvbfzgs3lifo/3j+ZlfkCmp",
+	"WHg/9wzG+yjHSE1ybgwXK8IZaYTs+KcSvOmt9xunZxmcbqX/d2u8xQMVfZ9Y8cNR2sitiqGZUnyg3J9j",
+	"hP3jLahQjL5nCxqM9+FDy1mTV4vh3qIdY/7loXe96c+gXg8b73eZ0IxU+xBAoTOIIbVWxWGYub1UGht/",
+	"j75HUC7KvwMAAP//j9Sg3+UQAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
